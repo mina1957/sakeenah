@@ -14,9 +14,15 @@ def process_audio_file(file_path, correct_text):
     recognized_text = recognize_speech(content)
     print(f"Recognized text: {recognized_text}")
 
-    feedback, accuracy = generate_feedback(recognized_text, correct_text)
-    print(f"Feedback: {feedback}")
+    general_feedback, accuracy, detailed_feedback = generate_feedback(recognized_text, correct_text)
+    print(f"General Feedback: {general_feedback}")
     print(f"Accuracy: {accuracy:.2f}")
+    if detailed_feedback:
+        print("Detailed Feedback:")
+        for feedback in detailed_feedback:
+            print(f"- {feedback}")
+    else:
+        print("No specific issues detected.")
 
 def test_speech_recognition():
     with app.app_context():
@@ -30,7 +36,7 @@ def test_speech_recognition():
         correct_text = get_verse_text(verse.id)
         print(f"Correct text: {correct_text}")
 
-        # Paths to your audio files
+        # Paths to audio files
         accurate_audio_path = "/Users/aminatasakho/Desktop/sakeenah/backend/basmallah_accurate.wav"
         inaccurate_audio_path = "/Users/aminatasakho/Desktop/sakeenah/backend/basmallah_inaccurate.wav"
 
