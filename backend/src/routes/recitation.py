@@ -1,8 +1,8 @@
 from flask import Blueprint, request, jsonify
+from src import db
 from src.models import Recitation
 from src.services.speech_recognition import recognize_speech
 from src.services.feedback_generator import generate_feedback
-from app import db
 
 bp = Blueprint('recitation', __name__, url_prefix='/recitation')
 

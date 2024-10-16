@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from src.models import User
-from app import db
+from src import db
+from sqlalchemy.exc import IntegrityError
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -13,14 +14,18 @@ def register():
         email=data['email'],
         password_hash=generate_password_hash(data['password'])
     )
-    db.session.add(user)
-    db.session.commit()
-    return jsonify({'message': 'User registered successfully'}), 201
+    try:
+        db.session.add(user)
+        db.session.commit()
+        return jsonify({'message': 'User registered successfully'}), 201
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({'message': 'Email already exists'}), 400
 
 @bp.route('/login', methods=['POST'])
 def login():
     data = request.json
-    user = User.query.filter_by(username=data['username']).first()
+    user = User.query.filter_by(email=data['email']).first()
     if user and check_password_hash(user.password_hash, data['password']):
         return jsonify({'message': 'Login successful'}), 200
     return jsonify({'message': 'Invalid credentials'}), 401
