@@ -2,12 +2,14 @@ from src.models import Verse
 import re
 
 def normalize_arabic_text(text):
-    # Remove diacritics and any non-Arabic characters
-    return re.sub(r'[^\u0600-\u06FF\s]', '', text)
+    # Remove diacritics (harakat) and any non-Arabic characters
+    text = re.sub(r'[\u064B-\u065F\u0670]', '', text)  # Remove diacritics
+    text = re.sub(r'[^\u0600-\u06FF\s]', '', text)  # Keep only Arabic characters and spaces
+    return text.strip()
 
 def generate_feedback(recognized_text, correct_text):
     # Normalize both texts
-    normalized_recognized = normalize_arabic_text(recognized_text)
+    normalized_recognized = recognized_text
     normalized_correct = normalize_arabic_text(correct_text)
 
     print(f"Debug - Normalized recognized: {normalized_recognized}")
