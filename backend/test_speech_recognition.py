@@ -6,6 +6,18 @@ from src.models import Verse
 
 app = create_app()
 
+def process_audio_file(file_path, correct_text):
+    print(f"\nProcessing file: {file_path}")
+    with open(file_path, "rb") as audio_file:
+        content = audio_file.read()
+
+    recognized_text = recognize_speech(content)
+    print(f"Recognized text: {recognized_text}")
+
+    feedback, accuracy = generate_feedback(recognized_text, correct_text)
+    print(f"Feedback: {feedback}")
+    print(f"Accuracy: {accuracy:.2f}")
+
 def test_speech_recognition():
     with app.app_context():
         # Ensure we have a verse in the database
@@ -18,18 +30,15 @@ def test_speech_recognition():
         correct_text = get_verse_text(verse.id)
         print(f"Correct text: {correct_text}")
 
-        # Path to your audio file
-        audio_file_path = "/Users/aminatasakho/Desktop/sakeenah/backend/basmallah_inaccurate.wav"
+        # Paths to your audio files
+        accurate_audio_path = "/Users/aminatasakho/Desktop/sakeenah/backend/basmallah_accurate.wav"
+        inaccurate_audio_path = "/Users/aminatasakho/Desktop/sakeenah/backend/basmallah_inaccurate.wav"
 
-        with open(audio_file_path, "rb") as audio_file:
-            content = audio_file.read()
+        # Process accurate audio
+        process_audio_file(accurate_audio_path, correct_text)
 
-        recognized_text = recognize_speech(content)
-        print(f"Recognized text: {recognized_text}")
-
-        feedback, accuracy = generate_feedback(recognized_text, correct_text)
-        print(f"Feedback: {feedback}")
-        print(f"Accuracy: {accuracy}")
+        # Process inaccurate audio
+        process_audio_file(inaccurate_audio_path, correct_text)
 
 if __name__ == "__main__":
     test_speech_recognition()
