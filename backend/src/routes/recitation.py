@@ -1,27 +1,52 @@
 from flask import Blueprint, request, jsonify
+from flask_cors import CORS
 from src import db
 from src.models import Recitation
 from src.services.speech_recognition import recognize_speech
 from src.services.feedback_generator import generate_feedback
+from werkzeug.utils import secure_filename
+import os
 
 bp = Blueprint('recitation', __name__, url_prefix='/recitation')
+CORS(bp)  # Enable CORS specifically for this blueprint
 
-@bp.route('/submit', methods=['POST'])
+@bp.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    return response
+
+@bp.route('/submit', methods=['POST', 'OPTIONS'])
 def submit_recitation():
-    data = request.json
-    audio_data = data['audio_data']
-    verse_id = data['verse_id']
-    user_id = data['user_id']
+    if request.method == "OPTIONS":
+        return jsonify({"msg": "ok"}), 200
+        
+    if 'audio' not in request.files:
+        return jsonify({'error': 'No audio file provided'}), 400
+    
+    audio_file = request.files['audio']
+    if audio_file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
 
-    # Perform speech recognition
-    recognized_text = recognize_speech(audio_data)
+    try:
+        # Read the file directly from request
+        audio_content = audio_file.read()
 
-    # Generate feedback
-    feedback, accuracy_score = generate_feedback(recognized_text, verse_id)
+        # Get the recognized text
+        recognized_text = recognize_speech(audio_content)
 
-    # Save recitation
-    recitation = Recitation(user_id=user_id, verse_id=verse_id, accuracy_score=accuracy_score)
-    db.session.add(recitation)
-    db.session.commit()
+        # Generate feedback
+        correct_text = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ"  # For testing
+        feedback, accuracy, detailed_feedback = generate_feedback(recognized_text, correct_text)
 
-    return jsonify({'feedback': feedback, 'accuracy_score': accuracy_score})
+        return jsonify({
+            'message': feedback,
+            'accuracy': accuracy,
+            'details': detailed_feedback,
+            'recognized_text': recognized_text
+        })
+
+    except Exception as e:
+        print(f"Error processing audio: {str(e)}")  # Add server-side logging
+        return jsonify({'error': str(e)}), 500
